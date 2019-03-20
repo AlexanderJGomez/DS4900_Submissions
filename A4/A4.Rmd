@@ -1,13 +1,16 @@
----
-title: "R Notebook"
-output:
-  pdf_document: default
-  html_document:
-    df_print: paged
-  html_notebook: default
+--- 
+title: Truck Report
+author:
+  - name: Alice Anonymous
+    email: alice@example.com
+    affiliation: Khoury
+abstract: |
+  This is a project describing the comptuation of truck reports.
+output: rticles::acm_article
 ---
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
+library(rticles)
 library(dplyr)
 library(readr)
 ```
@@ -63,8 +66,8 @@ for (filename in list.files("./data/commit_metadata/")) {
   if (project_count %% 50 == 0) {
     print(project_count)
   }
-  meta <- read.csv(paste("./data/commit_metadata/", filename, sep = ""))
-  file <- read.csv(paste("./data/commit_files/",filename, sep = ""))
+  meta <- read.csv(paste("commit_metadata/", filename, sep = ""))
+  file <- read.csv(paste("commit_files/",filename, sep = ""))
   combined <- inner_join(meta, file, by="hash") 
   if(nrow(file) != nrow(combined)) next
   combined <- subset(combined, grepl(file_regex, file))

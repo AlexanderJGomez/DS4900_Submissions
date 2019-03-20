@@ -62,7 +62,7 @@ num_authors <- c()
 
 project_count <- 0
 
-for (filename in list.files("./data/commit_metadata/")) {
+for (filename in list.files("./commit_metadata/")) {
   if (project_count %% 50 == 0) {
     print(project_count)
   }

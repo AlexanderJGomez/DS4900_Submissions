@@ -1,0 +1,119 @@
+---
+title: "R Notebook"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+  html_notebook: default
+---
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+library(dplyr)
+library(readr)
+```
+
+
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+
+file_regex <- ".scala$|\\.swift$|\\.go$|\\.js$|\\.cpp$|\\.h$|
+\\.java$|\\.c$|\\.flow$|\\.php$|\\.rb$|\\.ts$|
+\\.CC$|\\.cxx$|\\.groovy$|\\.sql$|\\.py$"
+
+compute_truck_factor <- function(combined) {
+  
+  by_file_author <- combined %>% group_by(file, author.name) %>% summarise(
+    all_added_lines = sum(added.lines)
+  )
+  
+  by_file_author <- by_file_author %>% group_by(file) %>% summarise(
+    max_lines_added = max(all_added_lines),
+    owner = author.name[which(all_added_lines == max_lines_added)][1]
+  )
+  
+  by_file_author <- by_file_author %>% group_by(owner) %>% summarise(
+    num_files_owned = n()
+  )
+  
+  owner_counts <- by_file_author[order(-by_file_author$num_files_owned),]$num_files_owned
+  
+  total_file_count <- sum(owner_counts)
+  for (i in 1:length(owner_counts)) {
+    if ((sum(owner_counts[1:i]) / total_file_count) > 0.5) {
+      return(i)
+    }
+  }
+}
+
+```
+
+
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE, results='hide'}
+project_names <- c()
+truck_factors <- c()
+num_commits <- c()
+num_files <- c()
+num_authors <- c()
+
+
+project_count <- 0
+
+for (filename in list.files("./data/commit_metadata/")) {
+  if (project_count %% 50 == 0) {
+    print(project_count)
+  }
+  meta <- read.csv(paste("./data/commit_metadata/", filename, sep = ""))
+  file <- read.csv(paste("./data/commit_files/",filename, sep = ""))
+  combined <- inner_join(meta, file, by="hash") 
+  if(nrow(file) != nrow(combined)) next
+  combined <- subset(combined, grepl(file_regex, file))
+  commits <- unique(combined$hash)
+  files <- unique(combined$file)
+  authors <- unique(combined$author.name)
+  project_names <- append(project_names, filename)
+  if (nrow(combined) == 0) {
+      truck_factors <- append(truck_factors, 0)
+  }
+  else{
+      truck_factors <- append(truck_factors, compute_truck_factor(combined))
+  }
+  
+  num_commits <- append(num_commits, length(commits))
+  num_files <- append(num_files, length(files))
+  num_authors <- append(num_authors, length(authors))
+  
+  project_count <- project_count + 1
+}
+
+```
+
+
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE, results='hide'}
+
+results_df <- data.frame(project_name = project_names, num_authors=num_authors, num_files=num_files, num_commits=num_commits, truck_factor=truck_factors)
+
+results_df <- results_df[(results_df$num_authors > 10),]
+
+```
+
+
+`r length(commits)` commits, `r length(files)` unique files and `r length(authors)` unique authors. I filtered the file types the same way Professor Vitek did in his report, keeping only files from known programming languages.
+
+I only considered projects with more than 10 authors.
+
+`r 100 * nrow(results_df[results_df$truck_factor == 1,]) / nrow(results_df)`% of projects have tf 1  
+`r 100 * nrow(results_df[results_df$truck_factor == 2,]) / nrow(results_df)`% of projects have tf 2  
+`r 100 * nrow(results_df[results_df$truck_factor == 3,]) / nrow(results_df)`% of projects have tf 3
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+
+
+plot(ecdf(results_df$truck_factor), xlab="Truck Factor", verticals=TRUE, do.points=FALSE, col.01line = NULL, xlim=c(1,10))
+
+
+```
+
+
+

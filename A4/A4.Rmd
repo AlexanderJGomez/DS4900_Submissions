@@ -15,7 +15,9 @@ library(dplyr)
 library(readr)
 ```
 
+# Introduction
 
+Here we say what this is all about.
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
@@ -51,6 +53,9 @@ compute_truck_factor <- function(combined) {
 ```
 
 
+# Methods
+
+Here we say how we did it.
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE, results='hide'}
 project_names <- c()
@@ -62,7 +67,7 @@ num_authors <- c()
 
 project_count <- 0
 
-for (filename in list.files("./commit_metadata/")) {
+for (filename in list.files("./commit_metadata/")[1:100]) {
   if (project_count %% 50 == 0) {
     print(project_count)
   }
@@ -102,19 +107,28 @@ results_df <- results_df[(results_df$num_authors > 10),]
 ```
 
 
+
 `r length(commits)` commits, `r length(files)` unique files and `r length(authors)` unique authors. I filtered the file types the same way Professor Vitek did in his report, keeping only files from known programming languages.
 
 I only considered projects with more than 10 authors.
 
-`r 100 * nrow(results_df[results_df$truck_factor == 1,]) / nrow(results_df)`% of projects have tf 1  
-`r 100 * nrow(results_df[results_df$truck_factor == 2,]) / nrow(results_df)`% of projects have tf 2  
-`r 100 * nrow(results_df[results_df$truck_factor == 3,]) / nrow(results_df)`% of projects have tf 3
+
+# Results
+
+Here we say what we found.
+
+`r round(100 * nrow(results_df[results_df$truck_factor == 1,]) / nrow(results_df),1)`% of projects have tf 1  
+`r round(100 * nrow(results_df[results_df$truck_factor == 2,]) / nrow(results_df),1)`% of projects have tf 2  
+`r round(100 * nrow(results_df[results_df$truck_factor == 3,]) / nrow(results_df),1)`% of projects have tf 3
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
-
-
-plot(ecdf(results_df$truck_factor), xlab="Truck Factor", verticals=TRUE, do.points=FALSE, col.01line = NULL, xlim=c(1,10))
-
+library(dplyr)
+library(ggplot2)
+results_df %>%
+  ggplot(aes(x=truck_factor)) + 
+  geom_step(aes(y=..y..),stat="ecdf") +
+  labs(x = "Truck factor") +
+  labs(y = "Frequency")
 
 ```
 
